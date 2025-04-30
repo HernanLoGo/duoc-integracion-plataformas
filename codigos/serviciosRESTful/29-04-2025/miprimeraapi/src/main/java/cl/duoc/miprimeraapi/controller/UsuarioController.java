@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -23,41 +25,45 @@ public class UsuarioController {
     private Long contadorId = 0L;
 
     @GetMapping("usuarios/{id}")
-    public Usuario getUsuarios(@PathVariable Long id) {
-        return data.get(id);
+    public ResponseEntity<Usuario> getUsuarios(@PathVariable Long id) {
+        Usuario userData = data.get(id);
+        if (userData == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(userData, HttpStatus.OK);
     }
 
     @PostMapping("usuarios")
-    public Usuario postUsuarios(@RequestBody Usuario usuario) {
+    public ResponseEntity<Usuario> postUsuarios(@RequestBody Usuario usuario) {
         usuario.setId(++contadorId);
         data.put(contadorId, usuario);
-
-        return data.get(contadorId);
+        return new ResponseEntity<>(data.get(contadorId), HttpStatus.CREATED);
     }
 
     @GetMapping("usuarios")
-    public List<Usuario> getTodosUsuarios() {
-        return new ArrayList<Usuario>(data.values());
+    public ResponseEntity<List<Usuario>> getTodosUsuarios() {
+        List<Usuario> response = new ArrayList<Usuario>(data.values());
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @PutMapping("usuarios/{id}")
-    public Usuario putUsuario(@PathVariable Long id, @RequestBody Usuario usuarioRequest) {
-
+    public ResponseEntity<Usuario> putUsuario(@PathVariable Long id, @RequestBody Usuario usuarioRequest) {
         Usuario userData = data.get(id);
-
+        if (userData == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
         userData.setNombre(usuarioRequest.getNombre());
         userData.setDireccion(usuarioRequest.getDireccion());
-
         data.put(id, userData);
-
-        return userData;
+        return new ResponseEntity<>(userData, HttpStatus.OK);
     }
 
     @PatchMapping("usuarios/{id}")
-    public Usuario patchUsuario(@PathVariable Long id, @RequestBody Usuario usuarioRequest) {
-
+    public ResponseEntity<Usuario> patchUsuario(@PathVariable Long id, @RequestBody Usuario usuarioRequest) {
         Usuario userData = data.get(id);
-
+        if (userData == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
         if (usuarioRequest.getNombre() != null && !usuarioRequest.getNombre().isEmpty()
                 && !usuarioRequest.getNombre().isBlank()) {
             userData.setNombre(usuarioRequest.getNombre());
@@ -66,16 +72,18 @@ public class UsuarioController {
                 && !usuarioRequest.getDireccion().isBlank()) {
             userData.setDireccion(usuarioRequest.getDireccion());
         }
-
         data.put(id, userData);
-
-        return userData;
+        return new ResponseEntity<>(userData, HttpStatus.OK);
     }
 
     @DeleteMapping("usuarios/{id}")
-    public void deleteUsuario(@PathVariable Long id) {
-        data.remove(id);
-        return;
+    public ResponseEntity<Void> deleteUsuario(@PathVariable Long id) {
+        Boolean eliminado = data.remove(id) != null;
+        if (eliminado) {
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
 
 }
